@@ -1,0 +1,338 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sensor Data Dashboard</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <div class="dashboard light-theme"> 
+        <header class="header">
+            <h1>Sensor Data Dashboard</h1>
+        </header>
+        <section class="sensors">
+            <div class="sensor moisture-sensor">
+                <h2>Soil Moisture Sensor 1</h2>
+                <div class="meter">
+                    <div class="meter-fill" id="moisture1-meter"></div>
+                </div>
+                <div class="sensor-value" id="moisture1-value">Loading...</div>
+                <div class="valve-control-container">
+                    <label for="moisture1-control">Valve Control:</label>
+                    <button id="moisture1-control" class="valve-control">Flip</button>
+                    <p class="valve1-status" id="valve1-status">Current Valve Status: Unknown</p>
+                </div>
+            </div>
+
+            <div class="sensor moisture-sensor">
+                <h2>Soil Moisture Sensor 2</h2>
+                <div class="meter">
+                    <div class="meter-fill" id="moisture2-meter"></div>
+                </div>
+                <div class="sensor-value" id="moisture2-value">Loading...</div>
+                <div class="valve-control-container">
+                    <label for="moisture2-control">Valve Control:</label>
+                    <button id="moisture2-control" class="valve-control">Flip</button>
+                    <p class="valve2-status" id="valve2-status">Current Valve Status: Unknown</p>
+                </div>
+            </div>
+
+            <div class="sensor water-level-sensor">
+                <h2>Water Level Sensor</h2>
+                <div class="meter">
+                    <div class="meter-fill" id="water-level-meter"></div>
+                </div>
+                <div class="sensor-value" id="water-level-value">Loading...</div>
+                <div class="valve-control-container">
+                    
+                   
+                   
+                </div>
+            </div>
+        </section>
+
+        <section class="weather">
+            <div class="wrapper">
+                <h2 id="cityoutput"></h2>
+                <div class="rain-bar" id="rain-bar">
+                    <div class="rain-fill" id="rain-fill"></div>
+                </div>
+                <p id="description" contenteditable="true"></p>
+            </div>
+        </section>
+    </div>
+</body>
+
+
+<script type="module">
+ function convertToCelsius(val) {
+    return (val - 273.15).toFixed(2);
+}
+let weatherDescription;
+
+function fetchWeatherData(latitude, longitude) {
+            const apiKey = '9953b82537121b01a972ccb2debd9d75'; 
+            const apiUrl = `https://api.openweathermap.org/data/2.5/weather?lat=${latitude}&lon=${longitude}&appid=${apiKey}`;
+
+            fetch(apiUrl)
+                .then(res => res.json())
+                .then(data => {
+                    const cityName = data.name;
+                    weatherDescription = data.weather[0].description;
+        
+                    const temperatureKelvin = data.main.temp;
+                    const windSpeed = data.wind.speed;
+
+                    // Calculate the chance of rain based on temperature, wind speed, and descriptions
+                    const chanceOfRain = calculateChanceOfRain(temperatureKelvin, windSpeed, weatherDescription);
+
+                    // Display the chance of rain as a percentage in the bar
+                    const rainFill = document.getElementById('rain-fill');
+                    const rainBar = document.getElementById('rain-bar');
+                    rainFill.style.width = `${chanceOfRain}%`;
+                    rainBar.setAttribute('data-percentage', chanceOfRain);
+
+                    // Update the UI with city name and description
+                    document.getElementById('cityoutput').textContent = `Weather in Salem`;
+                    document.getElementById('description').textContent = `Description: ${weatherDescription}`;
+                })
+                .catch(err => console.error('Error fetching weather data:', err));
+        }
+        function calculateChanceOfRain(temperatureKelvin, windSpeed, weatherDescription) {
+            // Initialize the chance of rain with a minimum value
+            let chanceOfRain = 10;
+
+            // Adjust these values and conditions as needed for your specific calculation
+            // Higher temperatures and lower wind speeds reduce the chance of rain
+            if (temperatureKelvin < 290 && windSpeed > 5) {
+                chanceOfRain += 40;
+            } else if (temperatureKelvin < 290 || windSpeed > 5) {
+                chanceOfRain += 20;
+            }
+
+            // Check if the weather description contains keywords related to rain
+            if (weatherDescription.includes('rain') || weatherDescription.includes('showers')) {
+                chanceOfRain += 50;
+            }
+
+            // Ensure the chance of rain is within the range of 10 to 20 and capped at 100
+            chanceOfRain = Math.min(100, Math.max(10, chanceOfRain));
+
+            return chanceOfRain.toFixed(2);
+        }
+
+
+window.addEventListener('load', function() {
+    
+    if ("geolocation" in navigator) {
+        navigator.geolocation.getCurrentPosition(function(position) {
+            const latitude = position.coords.latitude;
+            const longitude = position.coords.longitude;
+
+            
+            fetchWeatherData(latitude, longitude);
+        });
+    } else {
+        
+        fetchWeatherData('chennai'); 
+    }
+});
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+    // Import the functions you need from the SDKs you need
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.4.0/firebase-app.js";
+    import { getAnalytics } from "https://www.gstatic.com/firebasejs/10.4.0/firebase-analytics.js";
+    import { get,set,ref,getDatabase,child,update,remove ,onValue} from "https://www.gstatic.com/firebasejs/10.4.0/firebase-database.js";
+    // TODO: Add SDKs for Firebase products that you want to use
+    // https://firebase.google.com/docs/web/setup#available-libraries
+  
+    // Your web app's Firebase configuration
+    // For Firebase JS SDK v7.20.0 and later, measurementId is optional
+    const firebaseConfig = {
+      apiKey: "AIzaSyAG3yXXSSjtwxCa6RPQbIjlQU51ICGZCMQ",
+      authDomain: "sensor-data-26db9.firebaseapp.com",
+      databaseURL: "https://sensor-data-26db9-default-rtdb.firebaseio.com",
+      projectId: "sensor-data-26db9",
+      storageBucket: "sensor-data-26db9.appspot.com",
+      messagingSenderId: "496098473150",
+      appId: "1:496098473150:web:e43ef5bfbda1b9fdf41aef",
+      measurementId: "G-N59W2KD3JV"
+    };
+  
+    // Initialize Firebase
+    const app = initializeApp(firebaseConfig);
+    const analytics = getAnalytics(app);
+    function writeWeatherData(weatherDescription) {
+    const db = getDatabase();
+    // Define the path where you want to store weather data in the database
+    const weatherDataRef = ref(db, 'weatherData');
+    
+    // Set the weather data under the 'weatherData' path
+    set(weatherDataRef, {
+      weather_condition: weatherDescription
+    }).then(() => {
+      console.log("Weather data added successfully");
+    }).catch((error) => {
+      console.error("Error adding weather data:", error);
+    });
+  }
+  
+function updateMoistureUI(sensorId, value) {
+    const meterFill = document.getElementById(`${sensorId}-meter`);
+    const moistureValue = document.getElementById(`${sensorId}-value`);
+    console.log('this is moisture1 ');
+    console.log(meterFill);
+    console.log(moistureValue);
+
+    // Update the meter fill based on the value (assuming values are in percentage)
+    if(value>100) value=100;
+    meterFill.style.width = `${value}%`;
+
+    // Update the moisture sensor value
+    moistureValue.textContent = `Moisture Value: ${value}%`;
+}
+
+// Function to update the UI for valve status
+// Function to update the UI for valve status
+function updateValveUI(valveId, status) {
+    const valveStatus = document.getElementById(`${valveId}-status`);
+    valveStatus.textContent = `Current Valve Status: ${status === 0 ? 'Close' : 'Open'}`;
+}
+
+
+// Function to read data from the database and update UI
+function readDataAndUpdateUI() {
+    const db = getDatabase();
+    const moisture1Ref = ref(db, 'soil1');
+    const moisture2Ref = ref(db, 'soil2');
+    const waterLevelRef = ref(db, 'waterlevel');
+    const valve1Ref = ref(db, 'valve1');
+    const valve2Ref = ref(db, 'valve2');
+    console.log(db);
+    console.log(moisture1Ref);
+    // Read moisture sensor 1 value
+    onValue(moisture1Ref, (snapshot) => {
+    if (snapshot.exists()) {
+        const value = snapshot.val();
+        updateMoistureUI('moisture1', value);
+    } else {
+        console.log("No data available for moisture sensor 1");
+    }
+}, (error) => {
+    console.error("Error reading moisture sensor 1 data:", error);
+});
+
+    // Read moisture sensor 2 value
+    onValue(moisture2Ref, (snapshot) => {
+        const value = snapshot.val();
+        updateMoistureUI('moisture2', value);
+    });
+
+    // Read water level sensor value
+    onValue(waterLevelRef, (snapshot) => {
+        const value = snapshot.val();
+        updateMoistureUI('water-level', value);
+    });
+
+    // Read valve 1 status
+    onValue(valve1Ref, (snapshot) => {
+        const status = snapshot.val();
+        updateValveUI('valve1', status);
+    });
+
+    // Read valve 2 status
+    onValue(valve2Ref, (snapshot) => {
+        const status = snapshot.val();
+        updateValveUI('valve2', status);
+    });
+}
+
+// Call the function to start reading data and updating the UI
+readDataAndUpdateUI();
+
+
+
+   // Function to toggle and update the valve control
+   // Function to toggle and update the valve control
+  // Function to toggle and update the valve control
+// Function to toggle and update the valve control
+function toggleValve(valveId, currentStatus) {
+    const db = getDatabase();
+
+    // Toggle the valve status
+    const newStatus = currentStatus === 0 ? 1 : 0;
+
+    // Update the valve status in the database to the new value
+    set(ref(db, valveId), newStatus)
+        .then(() => {
+            console.log(`${valveId} status updated successfully`);
+        })
+        .catch((error) => {
+            console.error(`Error updating ${valveId} status:`, error);
+        });
+}
+
+
+
+    // Add event listeners to flip buttons to toggle valves
+    const db=getDatabase();
+    document.getElementById('moisture1-control').addEventListener('click', () => {
+        onValue(ref(db, 'valve1'), (snapshot) => {
+            const currentStatus = snapshot.val();
+            toggleValve('valve1', currentStatus);
+        });
+    });
+
+    document.getElementById('moisture2-control').addEventListener('click', () => {
+        onValue(ref(db, 'valve2'), (snapshot) => {
+            const currentStatus = snapshot.val();
+            toggleValve('valve2', currentStatus);
+        });
+    });
+
+    // Add hover styles to the flip buttons
+    const valveButtons = document.querySelectorAll('.valve-control');
+    valveButtons.forEach((button) => {
+        button.addEventListener('mouseenter', () => {
+            button.style.backgroundColor = '#0056b3'; // Change background color on hover
+        });
+
+        button.addEventListener('mouseleave', () => {
+            button.style.backgroundColor = '#007bff'; // Restore background color when not hovering
+        });
+    });
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+   
+  </script>
+</html>
